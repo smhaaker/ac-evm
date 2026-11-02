@@ -97,7 +97,7 @@ func (m model) viewSign() string {
 		}
 		return b + hintStyle.Render("reading nonce…") + "\n\n" + hintStyle.Render("esc: cancel")
 	}
-	b += hintStyle.Render("you are signing:") + "\n" + r.text + "\n\n"
+	b += hintStyle.Render("you are signing:") + "\n" + ac.Printable(r.text) + "\n\n"
 	b += fmt.Sprintf("  stored:    %d bytes (%s prior)\n", len(r.blob), ac.PriorName(r.blob[0]))
 	b += fmt.Sprintf("  chain:     %d%s\n", r.chainID, fujiNote(r.chainID))
 	b += fmt.Sprintf("  contract:  %s\n", m.cfg.NFT)
@@ -190,7 +190,7 @@ func (m model) viewSubmit() string {
 		b += "\n" + fmt.Sprintf("  author:   %s\n", v.Author.Hex()) +
 			fmt.Sprintf("  stored:   %d bytes (%s prior)\n", len(v.Blob), ac.PriorName(v.Blob[0])) +
 			fmt.Sprintf("  expires:  %s\n", time.Unix(int64(v.Deadline), 0).Format("2006-01-02 15:04")) +
-			"\n" + hintStyle.Render("decoded:") + "\n" + m.submitText + "\n" +
+			"\n" + hintStyle.Render("decoded:") + "\n" + ac.Printable(m.submitText) + "\n" +
 			"\n" + hintStyle.Render("enter: review gas & submit   esc: cancel")
 		return b
 	}

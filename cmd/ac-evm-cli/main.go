@@ -437,7 +437,7 @@ func cmdRead(args []string) error {
 	if id, out, err := ac.Unpack(encoded, 1<<16); err == nil && string(out) == msg {
 		fmt.Printf("prior: %s\n", ac.PriorName(id))
 	}
-	fmt.Printf("decoded on-chain (%d bytes):\n%s\n", len(msg), msg)
+	fmt.Printf("decoded on-chain (%d bytes):\n%s\n", len(msg), ac.Printable(msg))
 	return nil
 }
 
@@ -558,7 +558,7 @@ func cmdSubmit(args []string) error {
 		fmt.Printf("Submit voucher (you pay gas; the token goes to the author)\n")
 		fmt.Printf("  author:    %s\n", v.Author.Hex())
 		fmt.Printf("  message:   %d bytes -> %d packed (%s prior)\n", len(text), len(v.Blob), ac.PriorName(v.Blob[0]))
-		fmt.Printf("  decoded:   %s\n", text)
+		fmt.Printf("  decoded:   %s\n", ac.Printable(string(text)))
 	}, *dir)
 }
 

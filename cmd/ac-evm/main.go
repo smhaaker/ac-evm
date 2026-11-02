@@ -264,7 +264,7 @@ func (m model) loadGalleryCmd() tea.Cmd {
 			}
 			first, badge := "", ""
 			if msg, err := c.ReadMessage(ctx, id); err == nil {
-				first = firstLine(msg)
+				first = firstLine(ac.Printable(msg))
 				if enc, err := c.CompressedOf(ctx, id); err == nil {
 					badge = priorBadge(msg, enc)
 				}
@@ -1132,7 +1132,7 @@ func (m model) viewReader() string {
 			encStyle.Render("0x"+hex.EncodeToString(m.readerEnc)) + "\n\n"
 		b += m.matchGraph(m.reader, m.readerEnc) + "\n\n"
 	}
-	b += hintStyle.Render("decoded:") + "\n" + m.reader + "\n\n" +
+	b += hintStyle.Render("decoded:") + "\n" + ac.Printable(m.reader) + "\n\n" +
 		hintStyle.Render("i: interval steps   d: decode these bytes yourself   q/esc: back")
 	return b
 }
@@ -1145,7 +1145,7 @@ func (m model) viewDecode() string {
 		b += "\n" + errStyle.Render(m.err.Error()) + "\n"
 	} else if m.decodeOut != "" {
 		b += "\n" + hintStyle.Render(fmt.Sprintf("decoded %d coded bytes → %d bytes:", len(m.decodeRaw), len(m.decodeOut))) + "\n" +
-			m.decodeOut + "\n\n" + m.matchGraph(m.decodeOut, m.decodeRaw) + "\n"
+			ac.Printable(m.decodeOut) + "\n\n" + m.matchGraph(m.decodeOut, m.decodeRaw) + "\n"
 	}
 	if m.decodeOut != "" {
 		b += hintStyle.Render("tab: step through the interval decode")
@@ -1216,8 +1216,11 @@ func wrapCursor(text string, pos, width int) string {
 			b.WriteString("\n  ")
 		}
 		ch := string(rune(src[i]))
-		if src[i] == '\n' {
+		switch c := src[i]; {
+		case c == '\n':
 			ch = "¶"
+		case c < 0x20 || (c >= 0x7f && c <= 0x9f): // never emit raw control bytes
+			ch = "·"
 		}
 		if i == pos {
 			b.WriteString(selStyle.Render(ch))
