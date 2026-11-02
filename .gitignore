@@ -1,0 +1,11 @@
+# wallets + config (keystores!)
+state/
+state-local/
+state-cli/
+
+# build output (make compile / go build)
+out/
+/ac-evm
+/ac-evm-cli
+
+.DS_Store

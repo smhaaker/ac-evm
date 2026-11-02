@@ -406,7 +406,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.pending = nil
 		m.screen = screenGallery
 		if msg.err != nil {
-			m.err = msg.err
+			m.err, m.status = chain.ExplainRevert(msg.err), ""
 			return m, nil
 		}
 		m.err = nil
