@@ -1,0 +1,59 @@
+name: ac-evm
+
+x-go: &go
+  image: golang:1.25-alpine@sha256:1ae0735f00daffa3aaf1363a5184c0d2dc55c78e3db4ec70241cdac97bf84b59
+  working_dir: /src
+  volumes: [".:/src", "gocache:/root/.cache", "gomod:/go/pkg/mod"]
+  environment: { CGO_ENABLED: "0" }
+  profiles: [tools]
+
+services:
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:stable@sha256:043752653d5be351c71709091b3db97c4421c907eb40ea294195e7f532aadf46
+    entrypoint: anvil
+    command: --host 0.0.0.0 --gas-limit 1000000000 # big eth_call budget for long test vectors
+    ports: ["127.0.0.1:8545:8545"]
+    healthcheck:
+      test: ["CMD", "cast", "chain-id", "--rpc-url", "http://127.0.0.1:8545"]
+      interval: 1s
+      retries: 30
+
+  solc:
+    image: ethereum/solc:0.8.30@sha256:b116bf835554d40c501feab0b2c943a8c5eec003b804bcc5b326b85c93da00c2
+    platform: linux/amd64 # no arm64 build published
+    working_dir: /src
+    volumes: [".:/src"]
+    command: --via-ir --optimize --bin --abi -o out --overwrite contracts/ArithmeticDecoder.sol contracts/ACToken.sol
+    profiles: [tools]
+
+  test:
+    <<: *go
+    command: go test ./...
+
+  check:
+    <<: *go
+    environment: { CGO_ENABLED: "0", RPC_URL: "http://anvil:8545" }
+    command: go test -tags evm -count=1 ./contracts/
+    depends_on: { anvil: { condition: service_healthy } }
+
+  tui:
+    build: .
+    stdin_open: true
+    tty: true
+    volumes: ["./state:/state"] # keystore + config.json; never baked into the image
+    environment: { TERM: "${TERM:-xterm-256color}", COLORTERM: "${COLORTERM:-truecolor}" }
+    profiles: [tools]
+
+  cli:
+    image: ac-evm-tui
+    depends_on: [tui] # same image
+    entrypoint: ["/ac-evm-cli"]
+    working_dir: / # so deploy's default -out resolves to /out
+    stdin_open: true
+    tty: true
+    volumes: ["./state:/state"]
+    profiles: [tools]
+
+volumes:
+  gocache:
+  gomod:
